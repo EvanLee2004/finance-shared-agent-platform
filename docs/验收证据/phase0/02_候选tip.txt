@@ -1,0 +1,1 @@
+Use: git rev-parse HEAD on worktree fsa-p0-foundation after REVIEW_READY
