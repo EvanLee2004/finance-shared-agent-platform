@@ -1,1 +1,7 @@
-35e0269d4f7f066b70caba55185828ba5d445926
+# Candidate tip for VERIFIER handoff
+# Authoritative value is also on the task control card (candidate_commit).
+# After checkout of this worktree tip, run:
+#   git rev-parse HEAD
+#
+# Product code (schema/auth/vue/tests): c29f7ffa31ae33f3b6051fa96f41e3e89c7e7cda
+# Baseline: 4db2dfeabd4d2e0a51045641d8e400f031dbc661
