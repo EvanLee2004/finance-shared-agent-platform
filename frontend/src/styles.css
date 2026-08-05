@@ -47,6 +47,23 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
+  line-height: 1.5;
+}
+
+.empty-state {
+  text-align: left;
+}
+
+.empty-state h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+code {
+  font-size: 0.9em;
+  background: var(--chip-off-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
 }
 
 .app-shell {

@@ -19,8 +19,10 @@
 
 | 能力 | 是否需要 OpenCode |
 |------|-------------------|
-| 登录 / 工作台 / health / 主题 / 技能目录只读 | **否** |
-| 智能对话发消息 | **是**（可先建会话、浏览历史） |
+| 登录 / 工作台 / health / 主题 / 技能目录 / 授权治理 | **否** |
+| 智能对话发消息 / 模型列表 | **是**（可先建会话、浏览历史；模型来自 OC API 全量列表） |
+
+Skills 来源：本机 `FSA_SKILLS_ROOT`（或默认探测到的 `finance-shared-skills` 克隆）→ `catalog.yaml` 同步入库；**published ∩ 授权** 可运行（admin 默认可跑全部 published）。公开仓：[Gitee finance-shared-skills](https://gitee.com/Lee157/finance-shared-skills)。
 
 - 1 中台 chat 会话 ↔ 1 OpenCode session（有 OC 时绑定）
 - 模型 API Key **只在 OpenCode 侧**配置，禁止进 git
@@ -48,6 +50,8 @@ export FSA_DATA_ROOT="$(pwd)/data"
 export FSA_BOOTSTRAP_ADMIN_USER=admin
 export FSA_BOOTSTRAP_ADMIN_PASSWORD='Phase0Demo1!'
 export FSA_OPENCODE_BASE_URL=http://127.0.0.1:4096
+# 可选：本地 finance-shared-skills 克隆路径（管理员可 POST /api/v1/admin/skills/sync）
+# export FSA_SKILLS_ROOT=/path/to/finance-shared-skills
 
 cd backend
 python3 -m venv .venv

@@ -39,3 +39,8 @@ class OcUnavailable(AppError):
         message: str = "OpenCode 未就绪。请在工作台启用 OpenCode 后再发送消息。",
     ) -> None:
         super().__init__("oc_unavailable", message, 503)
+
+
+class Forbidden(AppError):
+    def __init__(self, message: str = "无权限") -> None:
+        super().__init__("forbidden", message, 403)

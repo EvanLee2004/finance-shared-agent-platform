@@ -72,6 +72,29 @@ export async function fetchSkillsCatalog() {
   return data;
 }
 
+export async function fetchSkills(scope = "runnable") {
+  const res = await fetch(
+    `/api/v1/skills?scope=${encodeURIComponent(scope)}`,
+    { credentials: "include" },
+  );
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "技能列表失败", res.status);
+  return data;
+}
+
+/** Admin: sync local/Gitee skills tree (FSA_SKILLS_ROOT). */
+export async function syncSkills(pull = false) {
+  const res = await fetch("/api/v1/admin/skills/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ pull: Boolean(pull) }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "同步技能失败", res.status);
+  return data;
+}
+
 export async function listChats() {
   const res = await fetch("/api/v1/chats", { credentials: "include" });
   const data = await parseJson(res);

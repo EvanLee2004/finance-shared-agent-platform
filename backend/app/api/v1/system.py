@@ -7,7 +7,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 
 from app.adapters.oc_client import OcClient, enable_guide
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import ConnDep, get_current_user
 from app.services.auth_service import UserRecord
 
 router = APIRouter(tags=["system"])
@@ -35,8 +35,33 @@ def opencode_models(_user: CurrentUser) -> dict[str, Any]:
 
 
 @router.get("/skills-catalog")
-def skills_catalog(_user: CurrentUser) -> dict[str, Any]:
-    """Read-only local notes (Phase0: no published skills DB required)."""
+def skills_catalog(
+    conn: ConnDep,
+    user: CurrentUser,
+) -> dict[str, Any]:
+    """Compat: prefer DB published∩grant; fall back to static notes if empty."""
+    from app.services import skill_service
+
+    items = skill_service.list_skills(
+        conn, user_id=user.id, role=user.role, scope="runnable"
+    )
+    if items:
+        return {
+            "items": [
+                {
+                    "skill_key": s["skill_key"],
+                    "title": s["title"],
+                    "summary": s["summary"],
+                    "visibility": s["visibility"],
+                    "requires_opencode": True,
+                    "runnable": s.get("runnable"),
+                    "current_version": s.get("current_version"),
+                }
+                for s in items
+            ],
+            "note": "来自本地/Gitee 同步的 published∩授权技能；管理员默认可跑全部 published。",
+            "source": "db",
+        }
     return {
         "items": [
             {
@@ -54,5 +79,6 @@ def skills_catalog(_user: CurrentUser) -> dict[str, Any]:
                 "requires_opencode": True,
             },
         ],
-        "note": "一期业务 skill 上架与授权见后续 Phase；当前为只读本地说明。",
+        "note": "尚未同步 Skills 仓；管理员可 POST /api/v1/admin/skills/sync（FSA_SKILLS_ROOT）。",
+        "source": "static_fallback",
     }

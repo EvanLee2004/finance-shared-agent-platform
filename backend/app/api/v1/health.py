@@ -9,6 +9,7 @@ from fastapi import APIRouter, Response
 from app.adapters.oc_client import OcClient
 from app.api.v1.deps import ConnDep
 from app.db.migrate import get_schema_version
+from app.services.skill_service import repo_status
 
 router = APIRouter(tags=["system"])
 
@@ -25,6 +26,7 @@ def health(conn: ConnDep) -> dict[str, Any]:
         db_ok = False
 
     oc = OcClient().probe()
+    skills = repo_status()
 
     status = "ok" if db_ok else "degraded"
     return {
@@ -33,11 +35,13 @@ def health(conn: ConnDep) -> dict[str, Any]:
         "schema_version": schema_version if schema_version is not None else 0,
         "opencode": oc.as_dict(),
         "db": {"ok": db_ok},
-        "skills_repo": {"ok": True, "note": "phase0_catalog_local_only"},
+        "skills_repo": skills,
         "capabilities": {
             "login_workbench": True,
             "chat_requires_opencode": True,
             "opencode_optional": True,
+            "skills_sync": True,
+            "grants": True,
         },
     }
 

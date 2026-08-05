@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, chats, health, me, system
+from app.api.v1 import auth, chats, health, me, skills, system
 from app.db.connection import connect, db_path
 from app.db.migrate import migrate
 from app.domain.errors import AppError
@@ -29,7 +29,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     title="财务共享中台 Agent",
-    version="0.1.0-phase0",
+    version="0.2.0-night",
     lifespan=lifespan,
 )
 
@@ -37,6 +37,7 @@ app.include_router(auth.router, prefix="/api/v1")
 app.include_router(me.router, prefix="/api/v1")
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(chats.router, prefix="/api/v1")
+app.include_router(skills.router, prefix="/api/v1")
 app.include_router(system.router, prefix="/api/v1")
 
 
@@ -52,6 +53,6 @@ async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
 def root() -> dict[str, Any]:
     return {
         "name": "finance-shared-agent-platform",
-        "phase": "phase0",
+        "phase": "night",
         "docs": "/docs",
     }
