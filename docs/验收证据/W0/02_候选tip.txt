@@ -1,0 +1,6 @@
+# Candidate tip SSOT = branch HEAD of feature/fsa-night-w0
+# Authoritative: git rev-parse HEAD
+# Baseline: 466c13d40040f3abe33ec68034171554606a32c9
+# Branch: feature/fsa-night-w0
+# Worktree: fsa-night-w0-stabilize
+#
