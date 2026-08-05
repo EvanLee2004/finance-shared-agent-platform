@@ -11,7 +11,8 @@ def test_health_200_with_schema_version_when_oc_down(client: TestClient) -> None
     body = r.json()
     assert "schema_version" in body
     assert body["schema_version"] == 1
-    assert body["status"] in ("ok", "degraded")
+    # DB ok + OC unreachable: process still reports ok-path (not 5xx)
+    assert body["status"] == "ok"
     assert body["db"]["ok"] is True
     assert "opencode" in body
     assert body["opencode"]["ok"] is False

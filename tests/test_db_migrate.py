@@ -72,6 +72,12 @@ def test_bootstrap_admin_only_when_none(
     conn = connect(db)
     try:
         migrate(conn)
+        # No env → skip
+        monkeypatch.delenv("FSA_BOOTSTRAP_ADMIN_USER", raising=False)
+        monkeypatch.delenv("FSA_BOOTSTRAP_ADMIN_PASSWORD", raising=False)
+        assert bootstrap_admin_if_needed(conn) is None
+        assert count_admins(conn) == 0
+
         monkeypatch.setenv("FSA_BOOTSTRAP_ADMIN_USER", "seedadmin")
         monkeypatch.setenv("FSA_BOOTSTRAP_ADMIN_PASSWORD", "seed-pass-99")
         first = bootstrap_admin_if_needed(conn)
@@ -82,8 +88,49 @@ def test_bootstrap_admin_only_when_none(
         assert user is not None
         assert user.role == "admin"
 
+        # Second call must not create another admin
         second = bootstrap_admin_if_needed(conn)
         assert second is None
+        assert count_admins(conn) == 1
+    finally:
+        conn.close()
+
+
+def test_bootstrap_via_app_lifespan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """App lifespan bootstrap only when no admin — drive real app entry."""
+    from fastapi.testclient import TestClient
+
+    root = tmp_path / "data"
+    root.mkdir()
+    monkeypatch.setenv("FSA_DATA_ROOT", str(root))
+    monkeypatch.setenv("FSA_BOOTSTRAP_ADMIN_USER", "bootadmin")
+    monkeypatch.setenv("FSA_BOOTSTRAP_ADMIN_PASSWORD", "boot-pass-123")
+    monkeypatch.setenv("FSA_OPENCODE_BASE_URL", "http://127.0.0.1:1")
+
+    # Fresh import path: TestClient runs lifespan migrate + bootstrap
+    from app.main import app
+
+    with TestClient(app) as c:
+        r = c.post(
+            "/api/v1/auth/login",
+            json={"username": "bootadmin", "password": "boot-pass-123"},
+        )
+        assert r.status_code == 200, r.text
+        assert "fsa_sid" in r.cookies
+
+    # Re-open with same DB: bootstrap must not block re-login
+    with TestClient(app) as c2:
+        r2 = c2.post(
+            "/api/v1/auth/login",
+            json={"username": "bootadmin", "password": "boot-pass-123"},
+        )
+        assert r2.status_code == 200
+    conn = connect(root / "app.db")
+    try:
+        from app.services.auth_service import count_admins
+
         assert count_admins(conn) == 1
     finally:
         conn.close()

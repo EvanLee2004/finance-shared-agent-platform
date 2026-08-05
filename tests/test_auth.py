@@ -18,7 +18,12 @@ def test_login_then_me_200(admin_client: TestClient) -> None:
     body = r.json()
     assert body["user"]["username"] == "admin"
     assert body["user"]["role"] == "admin"
+    # Real Set-Cookie path: cookie jar + response header
     assert "fsa_sid" in r.cookies
+    assert r.cookies.get("fsa_sid")
+    set_cookie = r.headers.get("set-cookie", "")
+    assert "fsa_sid=" in set_cookie
+    assert "HttpOnly" in set_cookie or "httponly" in set_cookie.lower()
 
     me = admin_client.get("/api/v1/me")
     assert me.status_code == 200, me.text
@@ -79,16 +84,27 @@ def test_change_password_revokes_old_cookie(admin_client: TestClient) -> None:
 
 
 def test_login_failed_uniform_401(admin_client: TestClient) -> None:
+    """Wrong password and unknown user both 401 auth_failed — no existence leak."""
     r = _login(admin_client, password="wrong-password")
     assert r.status_code == 401
-    assert r.json()["code"] == "auth_failed"
+    body_wrong = r.json()
+    assert body_wrong["code"] == "auth_failed"
+    assert "message" in body_wrong
 
     r2 = admin_client.post(
         "/api/v1/auth/login",
         json={"username": "no-such-user", "password": "x"},
     )
     assert r2.status_code == 401
-    assert r2.json()["code"] == "auth_failed"
+    body_unknown = r2.json()
+    assert body_unknown["code"] == "auth_failed"
+    # Same code + same message shape: do not reveal whether username exists
+    assert body_unknown["code"] == body_wrong["code"]
+    assert body_unknown["message"] == body_wrong["message"]
+    joined = (body_wrong["message"] + body_unknown["message"]).lower()
+    assert "not found" not in joined
+    assert "不存在" not in joined
+    assert "unknown" not in joined
 
 
 def test_login_writes_audit(admin_client: TestClient, data_root) -> None:
