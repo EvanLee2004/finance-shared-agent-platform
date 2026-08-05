@@ -1,25 +1,54 @@
 # finance-shared-agent-platform
 
-**财务共享中台 Agent** — 薄控制面 + 原样 [OpenCode](https://opencode.ai) 运行时。
+财务共享中台 Agent：**薄控制面（Vue + FastAPI）+ 原样 [OpenCode](https://opencode.ai)**（不修改 OpenCode 源码）。
 
-| 项 | 说明 |
-|----|------|
-| 改 OpenCode 源码？ | **否**，只调用 `opencode serve` |
-| Skills 公开库 | 独立仓 [finance-shared-skills](https://github.com/EvanLee2004/finance-shared-skills) |
-| 产品 | 登录、权限、任务/聊天、Skill 上架审批、与云仓一键同步 |
-| 部署 | Linux 部署机；Skills 优先 Gitee（国内） |
+| | |
+|--|--|
+| 公开 Skills | [finance-shared-skills](https://github.com/EvanLee2004/finance-shared-skills) · [Gitee](https://gitee.com/Lee157/finance-shared-skills) |
+| Gitee 本仓 | https://gitee.com/Lee157/finance-shared-agent-platform |
+| License | MIT |
 
-## 架构（摘要）
+## 架构（简）
 
 ```text
-浏览器 → 中台 API（本仓）→ 127.0.0.1 OpenCode Server
-                ↓
-     finance-shared-skills（git pull/push 手动同步）
+浏览器 → 本仓 API → 127.0.0.1 OpenCode serve
+              ↓ 手动同步
+     finance-shared-skills
 ```
 
-- 1 用户聊天会话 ↔ 1 OpenCode session
-- 未上架 Skill 仅自用；管理员批准后可授权并同步到 skills 仓
+- 1 聊天会话 ↔ 1 OpenCode session  
+- 一期：仅已上架且授权的 skill  
+- 模型：在 OpenCode 官方配置中管理（含免费模型）
 
-## License
+## 目录
 
-MIT
+```text
+backend/     FastAPI
+frontend/    Vue（建设中）
+deploy/      Linux 脚本
+docs/        架构与部署说明
+tests/       门禁与测试
+```
+
+## 本地（scaffold）
+
+```bash
+cd backend && python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --host 127.0.0.1 --port 18000
+curl -s http://127.0.0.1:18000/api/v1/health
+```
+
+```bash
+sh tests/run_verify.sh; echo EXIT:$?
+```
+
+## 文档
+
+- [架构](docs/ARCHITECTURE.md)
+- [Linux 部署要点](docs/DEPLOY_LINUX.md)
+- [概要设计（中文）](docs/HLD_zh.md)
+
+## 安全
+
+请勿提交 `.env`、API Key、真实财务数据。见 `.gitignore`。
