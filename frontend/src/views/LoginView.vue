@@ -57,12 +57,10 @@
       </el-form>
 
       <div class="demo-box">
-        <p><strong>本机演示账号</strong>（仅开发库，生产请关闭）</p>
+        <p><strong>本机演示账号</strong>（仅开发库；生产须关闭并改密）</p>
         <div class="demo-row">
-          <span>管理员 <code>admin</code> / <code>Phase0Demo1!</code></span>
-          <el-button link type="primary" @click="fill('admin', 'Phase0Demo1!')">
-            填入
-          </el-button>
+          <span>管理员 <code>admin</code>（密码见部署说明，点填入使用开发默认）</span>
+          <el-button link type="primary" @click="fillDemo">填入演示账号</el-button>
         </div>
       </div>
     </el-card>
@@ -71,17 +69,19 @@
 
 <script setup>
 import { reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { login } from "../api/client";
 
 const router = useRouter();
+const route = useRoute();
 const formRef = ref(null);
 const loading = ref(false);
 const error = ref("");
+/** Empty by default — demo credentials are not pre-filled into the form/DOM. */
 const form = reactive({
-  username: "admin",
-  password: "Phase0Demo1!",
+  username: "",
+  password: "",
 });
 
 const rules = {
@@ -89,9 +89,9 @@ const rules = {
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
 
-function fill(u, p) {
-  form.username = u;
-  form.password = p;
+function fillDemo() {
+  form.username = "admin";
+  form.password = "Phase0Demo1!";
   error.value = "";
 }
 
@@ -108,7 +108,12 @@ async function onSubmit() {
   try {
     await login(form.username.trim(), form.password);
     ElMessage.success("登录成功");
-    await router.replace({ name: "home" });
+    const redir = typeof route.query.redirect === "string" ? route.query.redirect : "";
+    if (redir && redir.startsWith("/") && !redir.startsWith("//")) {
+      await router.replace(redir);
+    } else {
+      await router.replace({ name: "home" });
+    }
   } catch (e) {
     error.value = e.message || "登录失败，请检查用户名或密码";
   } finally {

@@ -7,7 +7,7 @@
 | 公开 Skills | [finance-shared-skills](https://github.com/EvanLee2004/finance-shared-skills) · [Gitee](https://gitee.com/Lee157/finance-shared-skills) |
 | Gitee 本仓 | https://gitee.com/Lee157/finance-shared-agent-platform |
 | License | MIT |
-| 当前阶段 | **本机可用中台**（登录/工作台/技能同步授权/可选 OC 对话 · 一夜队列 W0–W9） |
+| 当前阶段 | **本机可用中台**（登录/工作台/对话/技能/管理授权审计/可选 OC · 一夜 W0–W11 收口） |
 
 ## 架构（简 · 与代码一致）
 
@@ -111,12 +111,14 @@ curl -sS http://127.0.0.1:4096/global/health || curl -sS http://127.0.0.1:4096/
 
 | 路由 | 说明 |
 |------|------|
-| `/login` | 登录 |
-| `/` | 工作台（用户、health、OC 状态、入口卡片） |
-| `/chats` | 智能对话 |
-| `/skills` | 技能目录只读 |
+| `/login` | 登录（演示账号需点「填入」，默认不预填密码） |
+| `/` | 工作台（概况数字、health、OC 状态、最近会话、改密/登出） |
+| `/chats` | 智能对话（模型来自 OC；离线可建会话看历史） |
+| `/skills` | 技能目录（published ∩ 授权） |
+| `/admin` | **仅管理员顶栏可见**：技能授权、审计日志、Skills 仓同步 |
 
-顶栏可切换 **Light / Neon** 主题（`localStorage` 键 `fsa_theme`）。
+顶栏可切换 **浅色 / 暗色（Neon）** 主题（`localStorage` 键 `fsa_theme`），并显示当前用户与登出。  
+未登录访问受保护路由会进入登录页；修改密码走 `POST /api/v1/auth/change-password`（成功后需重新登录）。
 
 ## 门禁
 

@@ -8,7 +8,6 @@
             授权已上架技能、查看审计日志、同步 Skills 仓。权限以服务端为准；非管理员无法使用本页。
           </p>
         </div>
-        <el-button @click="$router.push({ name: 'home' })">工作台</el-button>
       </div>
     </header>
 
@@ -67,7 +66,10 @@
             </el-button>
           </el-form>
           <p class="muted" style="margin-top: 12px">
-            说明：当前版本尚未提供开户列表 UI（记 later）。授权对象可用「角色 user」一次授给全体普通角色，或使用用户 UUID。
+            说明：当前版本尚未提供开户列表 UI（产品边界·Phase2）。授权对象可用「角色 user」一次授给全体普通角色，或使用用户 UUID。
+            <template v-if="me?.id">
+              当前登录用户 ID：<code>{{ me.id }}</code>
+            </template>
           </p>
         </section>
 

@@ -71,3 +71,31 @@ def test_home_open_chat_passes_id_query_and_chat_selects() -> None:
     assert "openChat" in home
     assert "route.query.id" in chat or 'route.query.id' in chat
     assert "selectChat" in chat
+
+
+def test_w11_shell_auth_and_change_password_surface() -> None:
+    """W11: admin nav gated, global logout, change-password UI, no prefilled login."""
+    root = Path(__file__).resolve().parents[1]
+    app = (root / "frontend" / "src" / "App.vue").read_text(encoding="utf-8")
+    login = (root / "frontend" / "src" / "views" / "LoginView.vue").read_text(
+        encoding="utf-8"
+    )
+    home = (root / "frontend" / "src" / "views" / "HomeView.vue").read_text(
+        encoding="utf-8"
+    )
+    client = (root / "frontend" / "src" / "api" / "client.js").read_text(
+        encoding="utf-8"
+    )
+    router = (root / "frontend" / "src" / "router" / "index.js").read_text(
+        encoding="utf-8"
+    )
+    assert "adminOnly" in app
+    assert "onLogout" in app
+    assert "beforeEach" in router
+    assert "changePassword" in client
+    assert "change-password" in client
+    assert "修改密码" in home
+    assert "onChangePassword" in home
+    # credentials not pre-filled as default form values
+    assert 'username: ""' in login or "username: ''" in login
+    assert "fillDemo" in login

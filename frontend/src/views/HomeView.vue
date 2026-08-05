@@ -43,6 +43,7 @@
             显示名：<strong>{{ user.display_name }}</strong>
           </p>
           <div class="row" style="margin-top: 16px">
+            <el-button @click="showPwd = true">修改密码</el-button>
             <el-button @click="onLogout">登出</el-button>
             <el-button v-if="user?.role === 'admin'" type="primary" @click="goAdmin">
               管理
@@ -190,6 +191,41 @@
     </template>
 
     <el-dialog
+      v-model="showPwd"
+      title="修改密码"
+      width="420px"
+      destroy-on-close
+      @closed="resetPwdForm"
+    >
+      <el-form label-position="top" @submit.prevent="onChangePassword">
+        <el-form-item label="当前密码">
+          <el-input v-model="pwdForm.old" type="password" show-password autocomplete="current-password" />
+        </el-form-item>
+        <el-form-item label="新密码（至少 8 位）">
+          <el-input v-model="pwdForm.next" type="password" show-password autocomplete="new-password" />
+        </el-form-item>
+        <el-form-item label="确认新密码">
+          <el-input v-model="pwdForm.confirm" type="password" show-password autocomplete="new-password" />
+        </el-form-item>
+        <el-alert
+          v-if="pwdError"
+          type="error"
+          :title="pwdError"
+          show-icon
+          :closable="false"
+          style="margin-bottom: 12px"
+        />
+        <div class="row">
+          <el-button type="primary" :loading="pwdSaving" native-type="submit">确认修改</el-button>
+          <el-button @click="showPwd = false">取消</el-button>
+        </div>
+      </el-form>
+      <p class="muted" style="margin-top: 12px">
+        修改成功后需使用新密码重新登录。
+      </p>
+    </el-dialog>
+
+    <el-dialog
       v-model="showGuide"
       :title="guide?.title || '启用 OpenCode'"
       width="560px"
@@ -247,6 +283,7 @@ import {
 } from "@element-plus/icons-vue";
 import StateBlock from "../components/StateBlock.vue";
 import {
+  changePassword,
   fetchDashboardStats,
   fetchHealth,
   fetchMe,
@@ -270,6 +307,10 @@ const confirmed = ref(false);
 const guide = ref(null);
 const probing = ref(false);
 const probeMsg = ref("");
+const showPwd = ref(false);
+const pwdSaving = ref(false);
+const pwdError = ref("");
+const pwdForm = ref({ old: "", next: "", confirm: "" });
 
 const ocOnline = computed(() => Boolean(health.value?.opencode?.ok));
 const healthLabel = computed(() => {
@@ -392,6 +433,40 @@ async function onLogout() {
   }
   ElMessage.success("已登出");
   await router.replace({ name: "login" });
+}
+
+function resetPwdForm() {
+  pwdForm.value = { old: "", next: "", confirm: "" };
+  pwdError.value = "";
+  pwdSaving.value = false;
+}
+
+async function onChangePassword() {
+  pwdError.value = "";
+  const { old, next, confirm } = pwdForm.value;
+  if (!old || !next) {
+    pwdError.value = "请填写当前密码与新密码";
+    return;
+  }
+  if (next.length < 8) {
+    pwdError.value = "新密码至少 8 位";
+    return;
+  }
+  if (next !== confirm) {
+    pwdError.value = "两次输入的新密码不一致";
+    return;
+  }
+  pwdSaving.value = true;
+  try {
+    await changePassword(old, next);
+    ElMessage.success("密码已修改，请重新登录");
+    showPwd.value = false;
+    await onLogout();
+  } catch (e) {
+    pwdError.value = e.message || "修改密码失败";
+  } finally {
+    pwdSaving.value = false;
+  }
 }
 </script>
 

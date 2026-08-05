@@ -35,6 +35,21 @@ export async function logout() {
   return parseJson(res);
 }
 
+export async function changePassword(oldPassword, newPassword) {
+  const res = await fetch("/api/v1/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      old_password: oldPassword,
+      new_password: newPassword,
+    }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "修改密码失败", res.status);
+  return data;
+}
+
 export async function fetchMe() {
   const res = await fetch("/api/v1/me", { credentials: "include" });
   const data = await parseJson(res);

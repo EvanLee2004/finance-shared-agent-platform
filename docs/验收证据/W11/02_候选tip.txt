@@ -1,0 +1,3 @@
+# tip SSOT — 勿手写假 40 位
+# 以仓库根执行：
+git rev-parse HEAD

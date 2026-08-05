@@ -150,7 +150,7 @@ def create_user(
     now = utc_now()
     norm = username.strip().lower()
     if not norm or not password:
-        raise ValidationError("username and password required")
+        raise ValidationError("用户名与密码不能为空")
     conn.execute(
         """
         INSERT INTO users(
@@ -356,7 +356,7 @@ def change_password(
     ip: str | None = None,
 ) -> None:
     if not new_password or len(new_password) < 8:
-        raise ValidationError("new_password must be at least 8 characters")
+        raise ValidationError("新密码至少 8 位")
     if not verify_password(user.password_hash, old_password):
         raise AuthFailed("原密码错误")
     now = utc_now()
@@ -375,7 +375,7 @@ def change_password(
         resource_type="user",
         resource_id=user.id,
         actor_user_id=user.id,
-        summary="password changed; all sessions revoked",
+        summary="密码已修改；全部会话已失效",
         ip=ip,
     )
     conn.commit()

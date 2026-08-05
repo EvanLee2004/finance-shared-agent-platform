@@ -9,7 +9,6 @@
           </p>
         </div>
         <div class="row">
-          <el-button @click="$router.push({ name: 'home' })">工作台</el-button>
           <el-button
             v-if="isAdmin"
             type="primary"

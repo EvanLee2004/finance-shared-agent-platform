@@ -10,7 +10,6 @@
     <div class="chat-layout">
       <aside class="chat-sidebar">
         <div class="row">
-          <el-button @click="goHome">工作台</el-button>
           <el-button type="primary" :loading="creating" @click="onCreate">
             新建会话
           </el-button>
@@ -210,7 +209,7 @@ watch(
 );
 
 function formatModelLabel(m) {
-  const free = m.free === true ? " · free" : "";
+  const free = m.free === true ? " · 免费" : "";
   return `${m.name || m.modelID} (${m.providerID})${free}`;
 }
 
@@ -344,9 +343,6 @@ async function scrollBottom() {
   if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight;
 }
 
-function goHome() {
-  router.push({ name: "home" });
-}
 function goEnableOc() {
   router.push({ name: "home", query: { oc: "1" } });
 }

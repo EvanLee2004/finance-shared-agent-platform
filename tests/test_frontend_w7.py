@@ -41,6 +41,8 @@ def test_shell_and_state_components_exist() -> None:
     app = (FE / "src" / "App.vue").read_text(encoding="utf-8")
     assert "nav-link" in app or "RouterLink" in app
     assert "工作台" in app or "home" in app
+    assert "visibleNav" in app or "adminOnly" in app
+    assert "登出" in app
     for name in ("LoginView.vue", "HomeView.vue", "ChatView.vue", "SkillsView.vue"):
         assert (FE / "src" / "views" / name).is_file()
 
