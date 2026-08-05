@@ -1,7 +1,12 @@
-# Candidate tip SSOT = branch HEAD of feature/fsa-night-w0
+# Candidate tip SSOT = branch HEAD of feature/fsa-night-w0 in this worktree.
 # Authoritative: git rev-parse HEAD
+# And: 控制卡 / 施工报告 tip 列以该命令输出为准（完整 40 位）
+#
 # Baseline: 466c13d40040f3abe33ec68034171554606a32c9
 # Branch: feature/fsa-night-w0
 # Worktree: fsa-night-w0-stabilize
+# Evidence tree (main W0 docs content commit): af3db6581ef77ba6a12010397929767877377773
 #
-af3db6581ef77ba6a12010397929767877377773
+# W1/DIRECTOR: do NOT copy a stale hash from this file body.
+# Run after checkout of this branch tip:
+#   git rev-parse HEAD
