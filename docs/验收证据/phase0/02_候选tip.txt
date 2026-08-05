@@ -1,14 +1,8 @@
-# Candidate tip for VERIFIER / handoff (SSOT with 控制卡)
+# Candidate = branch tip of feature/fsa-phase0-foundation in this worktree.
+# Authoritative: git -C <worktree> rev-parse HEAD
+# And: 控制卡 candidate_commit / 台账 tip 列
+#
+# Product feat (schema/auth/vue): c29f7ffa31ae33f3b6051fa96f41e3e89c7e7cda
+# Baseline: 4db2dfeabd4d2e0a51045641d8e400f031dbc661
 # Branch: feature/fsa-phase0-foundation
-# Full hash:
-a35908cd95c40b7fc0548753ec3bdb3fd278425a
-
-# Product feat (schema/auth/vue):
-c29f7ffa31ae33f3b6051fa96f41e3e89c7e7cda
-
-# Baseline:
-4db2dfeabd4d2e0a51045641d8e400f031dbc661
-
-# Worktree path:
-# ~/.grok/worktrees/finance-shared-agent-platform/fsa-p0-foundation
-# Main repo local branch mirrors this tip (not merged to main, not pushed).
+# Path: ~/.grok/worktrees/finance-shared-agent-platform/fsa-p0-foundation
