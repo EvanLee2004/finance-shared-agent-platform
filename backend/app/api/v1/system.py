@@ -28,6 +28,12 @@ def opencode_enable_guide(_user: CurrentUser) -> dict[str, Any]:
     return enable_guide()
 
 
+@router.get("/opencode/models")
+def opencode_models(_user: CurrentUser) -> dict[str, Any]:
+    """List models from live OpenCode only — never a mid-platform whitelist."""
+    return OcClient().list_models()
+
+
 @router.get("/skills-catalog")
 def skills_catalog(_user: CurrentUser) -> dict[str, Any]:
     """Read-only local notes (Phase0: no published skills DB required)."""

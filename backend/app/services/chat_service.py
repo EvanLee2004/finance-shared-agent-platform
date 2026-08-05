@@ -176,6 +176,8 @@ def send_message(
     user_id: str,
     chat_id: str,
     text: str,
+    provider_id: str | None = None,
+    model_id: str | None = None,
     oc: OcClient | None = None,
 ) -> dict[str, Any]:
     """Persist user msg; require OC for assistant; return both messages."""
@@ -194,6 +196,7 @@ def send_message(
 
     user_seq = _next_seq(conn, chat_id)
     user_msg_id = new_id()
+    # Annotate selected model in user content metadata via audit only; keep text clean
     conn.execute(
         """
         INSERT INTO chat_messages(
@@ -204,24 +207,52 @@ def send_message(
         """,
         (user_msg_id, chat_id, user_id, user_seq, text, now),
     )
-    conn.execute(
-        """
-        UPDATE chat_sessions
-        SET last_message_at = ?, updated_at = ?
-        WHERE id = ?
-        """,
-        (now, now, chat_id),
-    )
+    # Optionally persist last model hint on session (display only)
+    if provider_id and model_id:
+        hint = f"{provider_id}/{model_id}"
+        conn.execute(
+            """
+            UPDATE chat_sessions
+            SET last_message_at = ?, updated_at = ?, model_hint = ?
+            WHERE id = ?
+            """,
+            (now, now, hint, chat_id),
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE chat_sessions
+            SET last_message_at = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (now, now, chat_id),
+        )
     conn.commit()
 
+    used_model: dict[str, str] | None = None
     try:
         oc_session_id = _ensure_oc_session(conn, chat, client)
-        oc_resp = client.send_message(oc_session_id, text)
+        oc_resp = client.send_message(
+            oc_session_id,
+            text,
+            provider_id=provider_id,
+            model_id=model_id,
+        )
         assistant_text = extract_assistant_text(oc_resp)
+        rm = oc_resp.get("_request_model") if isinstance(oc_resp, dict) else None
+        if isinstance(rm, dict):
+            used_model = {
+                "providerID": str(rm.get("providerID") or ""),
+                "modelID": str(rm.get("modelID") or ""),
+            }
+        elif provider_id and model_id:
+            used_model = {"providerID": provider_id, "modelID": model_id}
     except OcUnavailable:
         raise
     except Exception as exc:
         assistant_text = f"[OpenCode 调用失败] {type(exc).__name__}: {exc}"
+        if provider_id and model_id:
+            used_model = {"providerID": provider_id, "modelID": model_id}
 
     asst_seq = _next_seq(conn, chat_id)
     asst_id = new_id()
@@ -255,7 +286,7 @@ def send_message(
     )
     conn.commit()
 
-    return {
+    out: dict[str, Any] = {
         "user_message": {
             "id": user_msg_id,
             "chat_id": chat_id,
@@ -275,3 +306,6 @@ def send_message(
             "created_at": asst_now,
         },
     }
+    if used_model:
+        out["model"] = used_model
+    return out

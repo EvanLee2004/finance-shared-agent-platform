@@ -107,9 +107,73 @@ class OcClient:
             resp.raise_for_status()
             return resp.json()
 
-    def send_message(self, session_id: str, text: str) -> dict[str, Any]:
-        """POST /session/{id}/message with text part; may return error payload."""
-        body = {"parts": [{"type": "text", "text": text}]}
+    def list_models(self) -> dict[str, Any]:
+        """Fetch models from OC (GET /api/model). No hardcoded catalog.
+
+        Returns:
+          {
+            ok: bool,
+            source: str | None,  # path used
+            items: [{providerID, modelID, name, ...}],
+            error: str | None,
+          }
+        Never raises; never invents models.
+        """
+        probe = self.probe()
+        if not probe.ok:
+            return {
+                "ok": False,
+                "source": None,
+                "items": [],
+                "error": probe.error or "unreachable",
+                "opencode": probe.as_dict(),
+            }
+        # Prefer v2 flat list; do NOT use /config/providers (may include secrets)
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                resp = client.get(f"{self.base_url}/api/model")
+            if resp.status_code >= 400:
+                return {
+                    "ok": False,
+                    "source": "/api/model",
+                    "items": [],
+                    "error": f"http_{resp.status_code}",
+                    "opencode": probe.as_dict(),
+                }
+            body = resp.json()
+            raw = body.get("data") if isinstance(body, dict) else None
+            if not isinstance(raw, list):
+                raw = body if isinstance(body, list) else []
+            items = [_normalize_model_item(m) for m in raw if isinstance(m, dict)]
+            items = [m for m in items if m.get("providerID") and m.get("modelID")]
+            return {
+                "ok": True,
+                "source": "/api/model",
+                "items": items,
+                "error": None,
+                "opencode": probe.as_dict(),
+            }
+        except Exception as exc:  # noqa: BLE001
+            return {
+                "ok": False,
+                "source": "/api/model",
+                "items": [],
+                "error": type(exc).__name__,
+                "opencode": probe.as_dict(),
+            }
+
+    def send_message(
+        self,
+        session_id: str,
+        text: str,
+        *,
+        provider_id: str | None = None,
+        model_id: str | None = None,
+    ) -> dict[str, Any]:
+        """POST /session/{id}/message with text part + optional model ref."""
+        body: dict[str, Any] = {"parts": [{"type": "text", "text": text}]}
+        if provider_id and model_id:
+            body["model"] = {"providerID": provider_id, "modelID": model_id}
         with httpx.Client(timeout=self.chat_timeout) as client:
             resp = client.post(
                 f"{self.base_url}/session/{session_id}/message",
@@ -123,7 +187,39 @@ class OcClient:
                 data = {"data": data, "status_code": resp.status_code}
             if resp.status_code >= 400:
                 data["_http_status"] = resp.status_code
+            data["_request_model"] = body.get("model")
             return data
+
+
+def _normalize_model_item(m: dict[str, Any]) -> dict[str, Any]:
+    """Map OC model object → stable mid-platform shape (pass-through, no whitelist)."""
+    provider = m.get("providerID") or m.get("provider_id") or m.get("provider")
+    model_id = m.get("id") or m.get("modelID") or m.get("model_id")
+    name = m.get("name") or model_id or ""
+    # cost: OC may use array or object — expose only free flag if zero cost known
+    free: bool | None = None
+    cost = m.get("cost")
+    if isinstance(cost, list) and cost:
+        c0 = cost[0] if isinstance(cost[0], dict) else {}
+        try:
+            free = float(c0.get("input") or 0) == 0 and float(c0.get("output") or 0) == 0
+        except (TypeError, ValueError):
+            free = None
+    elif isinstance(cost, dict):
+        try:
+            free = float(cost.get("input") or 0) == 0 and float(cost.get("output") or 0) == 0
+        except (TypeError, ValueError):
+            free = None
+    return {
+        "providerID": str(provider) if provider else "",
+        "modelID": str(model_id) if model_id else "",
+        "name": str(name),
+        "family": m.get("family"),
+        "status": m.get("status"),
+        "enabled": m.get("enabled"),
+        "free": free,
+        "key": f"{provider}/{model_id}" if provider and model_id else "",
+    }
 
 
 def extract_assistant_text(oc_response: dict[str, Any]) -> str:

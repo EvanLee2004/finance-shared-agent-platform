@@ -458,6 +458,34 @@ button:disabled {
   padding: 0.85rem;
 }
 
+.model-bar {
+  border-bottom: 1px solid var(--line);
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--bg) 55%, var(--card));
+}
+
+.model-bar label {
+  margin-bottom: 0.35rem;
+}
+
+.model-bar select {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.model-hint {
+  margin: 0.4rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .honest-list {
   margin: 0.5rem 0 0;
   padding-left: 1.15rem;

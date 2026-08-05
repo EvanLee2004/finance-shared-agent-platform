@@ -25,9 +25,50 @@
     </aside>
 
     <section class="chat-main">
+      <div class="model-bar">
+        <label for="model-select">模型（来自 OpenCode）</label>
+        <div class="row">
+          <select
+            id="model-select"
+            v-model="selectedKey"
+            :disabled="!ocModelsOk || !models.length || sending"
+            @change="onModelChange"
+          >
+            <option v-if="!models.length" value="" disabled>
+              {{ modelPlaceholder }}
+            </option>
+            <option v-for="m in models" :key="m.key" :value="m.key">
+              {{ formatModelLabel(m) }}
+            </option>
+          </select>
+          <button
+            class="secondary"
+            type="button"
+            :disabled="modelsLoading"
+            @click="loadModels"
+          >
+            {{ modelsLoading ? "…" : "刷新列表" }}
+          </button>
+        </div>
+        <p class="model-hint">
+          <template v-if="!ocModelsOk">
+            OpenCode 离线或不可用 — 请先启用 OC。中台不维护模型白名单。
+          </template>
+          <template v-else-if="!models.length">
+            无可用模型，请在 OpenCode 配置 provider（/connect 或 opencode.json）。
+          </template>
+          <template v-else>
+            当前：
+            <strong>{{ selectedKey || "—" }}</strong>
+            · 共 {{ models.length }} 个（OC 返回）
+          </template>
+        </p>
+      </div>
+
       <div class="messages" ref="msgBox">
         <p v-if="!activeId" class="bubble system">
-          选择或新建会话。无 OpenCode 时可浏览历史；发送消息需先在工作台启用 OC。
+          选择或新建会话。模型列表完全来自本机 OpenCode；发送时携带所选
+          providerID/modelID。
         </p>
         <div
           v-for="m in messages"
@@ -67,14 +108,17 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import {
   createChat,
+  fetchOcModels,
   listChats,
   listMessages,
   sendMessage,
 } from "../api/client";
+
+const LS_MODEL = "fsa_selected_model_key";
 
 const router = useRouter();
 const chats = ref([]);
@@ -87,9 +131,78 @@ const creating = ref(false);
 const sending = ref(false);
 const msgBox = ref(null);
 
-onMounted(async () => {
-  await reloadChats();
+const models = ref([]);
+const ocModelsOk = ref(false);
+const modelsLoading = ref(false);
+const selectedKey = ref("");
+const modelsError = ref("");
+
+const modelPlaceholder = computed(() => {
+  if (modelsLoading.value) return "加载中…";
+  if (!ocModelsOk.value) return "先启用 OpenCode";
+  return "无可用模型";
 });
+
+onMounted(async () => {
+  await Promise.all([reloadChats(), loadModels()]);
+});
+
+function formatModelLabel(m) {
+  const free = m.free === true ? " · free" : "";
+  return `${m.name || m.modelID} (${m.providerID})${free}`;
+}
+
+function onModelChange() {
+  try {
+    if (selectedKey.value) localStorage.setItem(LS_MODEL, selectedKey.value);
+  } catch {
+    /* ignore */
+  }
+}
+
+function selectedModel() {
+  const m = models.value.find((x) => x.key === selectedKey.value);
+  if (!m) return null;
+  return { providerID: m.providerID, modelID: m.modelID };
+}
+
+async function loadModels() {
+  modelsLoading.value = true;
+  modelsError.value = "";
+  try {
+    const data = await fetchOcModels();
+    ocModelsOk.value = Boolean(data.ok);
+    models.value = Array.isArray(data.items) ? data.items : [];
+    // restore last choice if still in list; else first item
+    let last = "";
+    try {
+      last = localStorage.getItem(LS_MODEL) || "";
+    } catch {
+      last = "";
+    }
+    if (last && models.value.some((m) => m.key === last)) {
+      selectedKey.value = last;
+    } else if (models.value.length) {
+      selectedKey.value = models.value[0].key;
+      onModelChange();
+    } else {
+      selectedKey.value = "";
+    }
+    if (!data.ok) {
+      modelsError.value = data.error || "oc offline";
+    }
+  } catch (e) {
+    if (e.status === 401) {
+      await router.replace({ name: "login" });
+      return;
+    }
+    ocModelsOk.value = false;
+    models.value = [];
+    modelsError.value = e.message || "加载失败";
+  } finally {
+    modelsLoading.value = false;
+  }
+}
 
 async function reloadChats() {
   listError.value = "";
@@ -137,11 +250,17 @@ async function onSend() {
   sending.value = true;
   sendError.value = "";
   const text = draft.value.trim();
+  const model = selectedModel();
   try {
-    const data = await sendMessage(activeId.value, text);
+    const data = await sendMessage(activeId.value, text, model);
     draft.value = "";
     if (data.user_message) messages.value.push(data.user_message);
     if (data.assistant_message) messages.value.push(data.assistant_message);
+    if (data.model) {
+      // keep UI in sync with what was sent
+      const k = `${data.model.providerID}/${data.model.modelID}`;
+      if (k) selectedKey.value = k;
+    }
     await scrollBottom();
     await reloadChats();
   } catch (e) {

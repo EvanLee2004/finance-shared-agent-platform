@@ -101,17 +101,30 @@ export async function listMessages(chatId, afterSeq = 0) {
   return data;
 }
 
-export async function sendMessage(chatId, content) {
+export async function sendMessage(chatId, content, model) {
+  const payload = { content };
+  if (model && model.providerID && model.modelID) {
+    payload.providerID = model.providerID;
+    payload.modelID = model.modelID;
+  }
   const res = await fetch(
     `/api/v1/chats/${encodeURIComponent(chatId)}/messages`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(payload),
     },
   );
   const data = await parseJson(res);
   if (!res.ok) throw apiError(data, "发送失败", res.status);
+  return data;
+}
+
+/** Models from live OpenCode via mid-platform — never a local hard-coded list. */
+export async function fetchOcModels() {
+  const res = await fetch("/api/v1/opencode/models", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "模型列表失败", res.status);
   return data;
 }

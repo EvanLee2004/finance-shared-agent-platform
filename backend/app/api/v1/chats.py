@@ -23,6 +23,11 @@ class CreateChatBody(BaseModel):
 
 class SendMessageBody(BaseModel):
     content: str = Field(min_length=1, max_length=50000)
+    # Optional model selection from OC list (providerID + modelID)
+    provider_id: str | None = Field(default=None, alias="providerID", max_length=200)
+    model_id: str | None = Field(default=None, alias="modelID", max_length=400)
+
+    model_config = {"populate_by_name": True}
 
 
 @router.get("")
@@ -71,6 +76,8 @@ def post_message(
         user_id=user.id,
         chat_id=chat_id,
         text=body.content,
+        provider_id=body.provider_id,
+        model_id=body.model_id,
         oc=OcClient(),
     )
     return result
