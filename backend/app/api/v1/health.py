@@ -33,7 +33,12 @@ def health(conn: ConnDep) -> dict[str, Any]:
         "schema_version": schema_version if schema_version is not None else 0,
         "opencode": oc.as_dict(),
         "db": {"ok": db_ok},
-        "skills_repo": {"ok": True, "note": "phase0_not_checked"},
+        "skills_repo": {"ok": True, "note": "phase0_catalog_local_only"},
+        "capabilities": {
+            "login_workbench": True,
+            "chat_requires_opencode": True,
+            "opencode_optional": True,
+        },
     }
 
 

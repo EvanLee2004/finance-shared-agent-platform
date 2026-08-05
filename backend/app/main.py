@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import auth, health, me
+from app.api.v1 import auth, chats, health, me, system
 from app.db.connection import connect, db_path
 from app.db.migrate import migrate
 from app.domain.errors import AppError
@@ -36,6 +36,8 @@ app = FastAPI(
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(me.router, prefix="/api/v1")
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(chats.router, prefix="/api/v1")
+app.include_router(system.router, prefix="/api/v1")
 
 
 @app.exception_handler(AppError)

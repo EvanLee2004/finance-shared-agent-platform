@@ -1,4 +1,4 @@
-/** Mid-platform API client — only talks to /api/v1 (proxied in dev). */
+/** Mid-platform API client — only talks to /api/v1 (proxied in dev). Never OC. */
 
 async function parseJson(res) {
   try {
@@ -6,6 +6,13 @@ async function parseJson(res) {
   } catch {
     return null;
   }
+}
+
+function apiError(data, fallback, status) {
+  const err = new Error((data && data.message) || fallback);
+  err.code = data && data.code;
+  err.status = status;
+  return err;
 }
 
 export async function login(username, password) {
@@ -16,12 +23,7 @@ export async function login(username, password) {
     body: JSON.stringify({ username, password }),
   });
   const data = await parseJson(res);
-  if (!res.ok) {
-    const err = new Error((data && data.message) || "登录失败");
-    err.code = data && data.code;
-    err.status = res.status;
-    throw err;
-  }
+  if (!res.ok) throw apiError(data, "登录失败", res.status);
   return data;
 }
 
@@ -34,15 +36,82 @@ export async function logout() {
 }
 
 export async function fetchMe() {
-  const res = await fetch("/api/v1/me", {
+  const res = await fetch("/api/v1/me", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "未登录", res.status);
+  return data;
+}
+
+export async function fetchHealth() {
+  const res = await fetch("/api/v1/health", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "health 失败", res.status);
+  return data;
+}
+
+export async function fetchOcStatus() {
+  const res = await fetch("/api/v1/opencode/status", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "探测失败", res.status);
+  return data;
+}
+
+export async function fetchOcEnableGuide() {
+  const res = await fetch("/api/v1/opencode/enable-guide", {
     credentials: "include",
   });
   const data = await parseJson(res);
-  if (!res.ok) {
-    const err = new Error((data && data.message) || "未登录");
-    err.code = data && data.code;
-    err.status = res.status;
-    throw err;
-  }
+  if (!res.ok) throw apiError(data, "无法加载引导", res.status);
+  return data;
+}
+
+export async function fetchSkillsCatalog() {
+  const res = await fetch("/api/v1/skills-catalog", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "技能目录失败", res.status);
+  return data;
+}
+
+export async function listChats() {
+  const res = await fetch("/api/v1/chats", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "会话列表失败", res.status);
+  return data;
+}
+
+export async function createChat(title = "新对话") {
+  const res = await fetch("/api/v1/chats", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ title }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "创建会话失败", res.status);
+  return data;
+}
+
+export async function listMessages(chatId, afterSeq = 0) {
+  const res = await fetch(
+    `/api/v1/chats/${encodeURIComponent(chatId)}/messages?after_seq=${afterSeq}`,
+    { credentials: "include" },
+  );
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "消息加载失败", res.status);
+  return data;
+}
+
+export async function sendMessage(chatId, content) {
+  const res = await fetch(
+    `/api/v1/chats/${encodeURIComponent(chatId)}/messages`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ content }),
+    },
+  );
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "发送失败", res.status);
   return data;
 }

@@ -24,3 +24,18 @@ class AuthRequired(AppError):
 class ValidationError(AppError):
     def __init__(self, message: str) -> None:
         super().__init__("validation_error", message, 422)
+
+
+class NotFound(AppError):
+    def __init__(self, message: str = "资源不存在") -> None:
+        super().__init__("not_found", message, 404)
+
+
+class OcUnavailable(AppError):
+    """Send path needs OpenCode; platform still usable without it."""
+
+    def __init__(
+        self,
+        message: str = "OpenCode 未就绪。请在工作台启用 OpenCode 后再发送消息。",
+    ) -> None:
+        super().__init__("oc_unavailable", message, 503)
