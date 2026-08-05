@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.v1 import auth, chats, health, me, skills, system
@@ -46,6 +47,33 @@ async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,
         content={"code": exc.code, "message": exc.message},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    """Stable envelope: code + Chinese message (design 05 error table)."""
+    errors = exc.errors()
+    parts: list[str] = []
+    for err in errors[:5]:
+        loc = ".".join(str(x) for x in err.get("loc", ()) if x != "body")
+        msg = err.get("msg") or "无效"
+        if loc:
+            parts.append(f"{loc}: {msg}")
+        else:
+            parts.append(str(msg))
+    message = "请求参数无效"
+    if parts:
+        message = "请求参数无效：" + "；".join(parts)
+    return JSONResponse(
+        status_code=422,
+        content={
+            "code": "validation_error",
+            "message": message,
+            "detail": errors,
+        },
     )
 
 
