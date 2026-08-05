@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.adapters.oc_client import OcClient, enable_guide as _enable_guide
+from app.adapters.oc_client import OcClient
+from app.adapters.oc_client import enable_guide as _enable_guide
 
 
 def probe() -> dict[str, Any]:

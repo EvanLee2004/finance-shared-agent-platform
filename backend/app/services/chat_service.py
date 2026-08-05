@@ -14,8 +14,8 @@ from app.db.migrate import utc_now
 from app.domain import enums
 from app.domain.errors import NotFound, OcUnavailable, ValidationError
 from app.domain.ids import new_id
-from app.services.audit_service import write_audit
 from app.services import oc_service
+from app.services.audit_service import write_audit
 
 
 def _chat_row(row: sqlite3.Row) -> dict[str, Any]:
