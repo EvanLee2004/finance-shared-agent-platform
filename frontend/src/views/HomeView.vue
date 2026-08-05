@@ -44,7 +44,32 @@
           </p>
           <div class="row" style="margin-top: 16px">
             <el-button @click="onLogout">登出</el-button>
+            <el-button v-if="user?.role === 'admin'" type="primary" @click="goAdmin">
+              管理
+            </el-button>
           </div>
+        </section>
+
+        <section class="panel">
+          <h2>
+            <el-icon style="vertical-align: -2px"><DataLine /></el-icon>
+            我的概况
+          </h2>
+          <p class="meta-line">
+            已发布技能总数：
+            <strong>{{ stats?.skill_total ?? "—" }}</strong>
+          </p>
+          <p class="meta-line">
+            我可运行：
+            <strong>{{ stats?.skill_runnable ?? "—" }}</strong>
+          </p>
+          <p class="meta-line">
+            我的会话：
+            <strong>{{ stats?.chat_count ?? "—" }}</strong>
+          </p>
+          <p class="muted" style="margin-top: 8px">
+            「可运行」= 已发布且已授权给您（管理员默认可跑全部已发布）。
+          </p>
         </section>
 
         <section class="panel">
@@ -122,7 +147,33 @@
           <h3>能力说明</h3>
           <p class="hint">哪些功能不依赖 OpenCode、哪些需要——诚实说明。</p>
         </button>
+        <button
+          v-if="user?.role === 'admin'"
+          class="entry-card"
+          type="button"
+          @click="goAdmin"
+        >
+          <div class="entry-icon"><el-icon><Setting /></el-icon></div>
+          <h3>管理</h3>
+          <p class="hint">授权技能、查看审计日志、同步 Skills 仓。</p>
+        </button>
       </div>
+
+      <section class="panel" style="margin-top: 16px">
+        <div class="row" style="justify-content: space-between">
+          <h2 style="margin: 0">最近会话</h2>
+          <el-button link type="primary" @click="goChat">全部对话</el-button>
+        </div>
+        <ul v-if="recentChats.length" class="honest-list" style="margin-top: 12px">
+          <li v-for="c in recentChats" :key="c.id">
+            <a href="#" @click.prevent="openChat(c.id)">{{ c.title || "会话" }}</a>
+            <span class="muted" v-if="!c.oc_bound"> · 未绑定 OC</span>
+          </li>
+        </ul>
+        <p v-else class="muted" style="margin-top: 12px">
+          暂无会话。可到「智能对话」新建；OpenCode 离线时也可先建会话。
+        </p>
+      </section>
 
       <section v-if="showCaps" class="panel" style="margin-top: 16px">
         <h2>能力边界</h2>
@@ -188,16 +239,20 @@ import {
   ChatDotRound,
   Collection,
   Cpu,
+  DataLine,
   InfoFilled,
   Monitor,
+  Setting,
   User,
 } from "@element-plus/icons-vue";
 import StateBlock from "../components/StateBlock.vue";
 import {
+  fetchDashboardStats,
   fetchHealth,
   fetchMe,
   fetchOcEnableGuide,
   fetchOcStatus,
+  listChats,
   logout,
 } from "../api/client";
 
@@ -205,6 +260,8 @@ const router = useRouter();
 const route = useRoute();
 const user = ref(null);
 const health = ref(null);
+const stats = ref(null);
+const recentChats = ref([]);
 const error = ref("");
 const bootLoading = ref(true);
 const showCaps = ref(false);
@@ -240,12 +297,29 @@ async function boot() {
   try {
     const me = await fetchMe();
     user.value = me.user;
-    await refreshHealth();
+    await Promise.all([refreshHealth(), loadStats(), loadRecentChats()]);
     if (route.query.oc === "1") await openOcGuide();
   } catch {
     await router.replace({ name: "login" });
   } finally {
     bootLoading.value = false;
+  }
+}
+
+async function loadStats() {
+  try {
+    stats.value = await fetchDashboardStats();
+  } catch {
+    stats.value = null;
+  }
+}
+
+async function loadRecentChats() {
+  try {
+    const data = await listChats();
+    recentChats.value = (data.items || []).slice(0, 5);
+  } catch {
+    recentChats.value = [];
   }
 }
 
@@ -302,6 +376,12 @@ function goChat() {
 }
 function goSkills() {
   router.push({ name: "skills" });
+}
+function goAdmin() {
+  router.push({ name: "admin" });
+}
+function openChat(_id) {
+  router.push({ name: "chat" });
 }
 
 async function onLogout() {

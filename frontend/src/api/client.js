@@ -42,6 +42,39 @@ export async function fetchMe() {
   return data;
 }
 
+export async function fetchDashboardStats() {
+  const res = await fetch("/api/v1/dashboard/stats", { credentials: "include" });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "无法加载工作台统计", res.status);
+  return data;
+}
+
+export async function fetchAdminAudit(limit = 30) {
+  const res = await fetch(
+    `/api/v1/admin/audit?limit=${encodeURIComponent(limit)}`,
+    { credentials: "include" },
+  );
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "无法加载审计日志", res.status);
+  return data;
+}
+
+export async function putGrant(skillId, principalType, principalId) {
+  const res = await fetch("/api/v1/admin/grants", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      skill_id: skillId,
+      principal_type: principalType,
+      principal_id: principalId,
+    }),
+  });
+  const data = await parseJson(res);
+  if (!res.ok) throw apiError(data, "授权失败", res.status);
+  return data;
+}
+
 export async function fetchHealth() {
   const res = await fetch("/api/v1/health", { credentials: "include" });
   const data = await parseJson(res);

@@ -33,6 +33,7 @@ def test_unauthenticated_protected_routes_401(admin_client: TestClient) -> None:
     """Unauthenticated access must be 401 + code, never 500."""
     cases = [
         ("GET", "/api/v1/me", None),
+        ("GET", "/api/v1/dashboard/stats", None),
         ("GET", "/api/v1/chats", None),
         ("POST", "/api/v1/chats", {"title": "x"}),
         ("GET", "/api/v1/skills", None),

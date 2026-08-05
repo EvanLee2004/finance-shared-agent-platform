@@ -50,6 +50,7 @@ const navItems = [
   { name: "home", label: "工作台", icon: "HomeFilled" },
   { name: "chat", label: "智能对话", icon: "ChatDotRound" },
   { name: "skills", label: "技能目录", icon: "Collection" },
+  { name: "admin", label: "管理", icon: "Setting" },
 ];
 
 const showNav = computed(() => route.name !== "login");
@@ -61,6 +62,7 @@ const pageTitle = computed(() => {
     home: "工作台",
     chat: "智能对话",
     skills: "技能目录",
+    admin: "管理",
   };
   return map[route.name] || "财务共享中台";
 });
