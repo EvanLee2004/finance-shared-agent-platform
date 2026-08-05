@@ -79,6 +79,6 @@ def skills_catalog(
                 "requires_opencode": True,
             },
         ],
-        "note": "尚未同步 Skills 仓；管理员可 POST /api/v1/admin/skills/sync（FSA_SKILLS_ROOT）。",
+        "note": "尚未同步 Skills 仓。管理员可在本页点击「同步 Skills 仓」（需本机配置 FSA_SKILLS_ROOT）。",
         "source": "static_fallback",
     }

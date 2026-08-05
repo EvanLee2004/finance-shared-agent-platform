@@ -1,0 +1,6 @@
+# Candidate tip SSOT = branch HEAD of feature/fsa-night-all-in-one
+# Authoritative: git rev-parse HEAD
+# Wave: W7 frontend polish
+#
+# DIRECTOR: copy full 40-char from:
+#   git rev-parse HEAD
