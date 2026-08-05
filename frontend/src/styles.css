@@ -64,6 +64,51 @@ body {
   box-shadow: 0 8px 24px rgba(15, 39, 68, 0.06);
 }
 
+.login-card {
+  max-width: 440px;
+}
+
+.login-form .field {
+  margin-bottom: 0.15rem;
+}
+
+.login-form input {
+  min-height: 2.5rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.btn-primary {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.demo-box ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  line-height: 1.7;
+}
+
+.demo-box code {
+  font-size: 0.85em;
+  background: #eef3f7;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.linkish {
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.8rem;
+  background: #e8eef4;
+  color: var(--ink);
+  border-radius: 6px;
+}
+
+.linkish:hover {
+  background: #dbe4ed;
+}
+
 .card h1 {
   margin: 0 0 0.35rem;
   font-size: 1.35rem;
