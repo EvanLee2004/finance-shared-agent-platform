@@ -1,93 +1,124 @@
 <template>
-  <div class="card login-card">
-    <h1>登录</h1>
-    <p class="sub">财务共享中台 · 本机开发（Phase0）</p>
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
-    <form class="login-form" @submit.prevent="onSubmit">
-      <div class="field">
-        <label for="username">用户名</label>
-        <input
-          id="username"
-          v-model="username"
-          name="username"
-          autocomplete="username"
-          required
-        />
+  <div class="login-wrap">
+    <el-card class="login-card" shadow="never">
+      <h1>登录</h1>
+      <p class="lead muted">财务共享中台 · 本机工作台（登录后可用对话与技能）</p>
+
+      <el-alert
+        v-if="error"
+        type="error"
+        :title="error"
+        show-icon
+        :closable="false"
+        style="margin: 16px 0"
+        role="alert"
+      />
+
+      <el-form
+        ref="formRef"
+        label-position="top"
+        :model="form"
+        :rules="rules"
+        @submit.prevent="onSubmit"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input
+            id="username"
+            v-model="form.username"
+            name="username"
+            autocomplete="username"
+            clearable
+            size="large"
+            placeholder="请输入用户名"
+          />
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input
+            id="password"
+            v-model="form.password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            show-password
+            size="large"
+            placeholder="请输入密码"
+            @keyup.enter="onSubmit"
+          />
+        </el-form-item>
+        <el-button
+          type="primary"
+          size="large"
+          native-type="submit"
+          :loading="loading"
+          style="width: 100%"
+        >
+          {{ loading ? "登录中…" : "登录" }}
+        </el-button>
+      </el-form>
+
+      <div class="demo-box">
+        <p><strong>本机演示账号</strong>（仅开发库，生产请关闭）</p>
+        <div class="demo-row">
+          <span>管理员 <code>admin</code> / <code>Phase0Demo1!</code></span>
+          <el-button link type="primary" @click="fill('admin', 'Phase0Demo1!')">
+            填入
+          </el-button>
+        </div>
       </div>
-      <div class="field">
-        <label for="password">密码</label>
-        <input
-          id="password"
-          v-model="password"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        />
-      </div>
-      <button type="submit" class="btn-primary" :disabled="loading">
-        {{ loading ? "登录中…" : "登录" }}
-      </button>
-    </form>
-    <div class="meta demo-box">
-      <p><strong>本机演示账号</strong>（仅开发库）</p>
-      <ul>
-        <li>
-          管理员
-          <code>admin</code> /
-          <code>Phase0Demo1!</code>
-          <button type="button" class="linkish" @click="fill('admin', 'Phase0Demo1!')">
-            填入
-          </button>
-        </li>
-        <li>
-          演示用户
-          <code>demo</code> /
-          <code>DemoUser1!</code>
-          <button type="button" class="linkish" @click="fill('demo', 'DemoUser1!')">
-            填入
-          </button>
-        </li>
-        <li>
-          李尚
-          <code>lishang</code> /
-          <code>LiShang1!</code>
-          <button type="button" class="linkish" @click="fill('lishang', 'LiShang1!')">
-            填入
-          </button>
-        </li>
-      </ul>
-    </div>
+    </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { login } from "../api/client";
 
 const router = useRouter();
-const username = ref("admin");
-const password = ref("Phase0Demo1!");
-const error = ref("");
+const formRef = ref(null);
 const loading = ref(false);
+const error = ref("");
+const form = reactive({
+  username: "admin",
+  password: "Phase0Demo1!",
+});
+
+const rules = {
+  username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+  password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+};
 
 function fill(u, p) {
-  username.value = u;
-  password.value = p;
+  form.username = u;
+  form.password = p;
   error.value = "";
 }
 
 async function onSubmit() {
   error.value = "";
+  if (formRef.value) {
+    try {
+      await formRef.value.validate();
+    } catch {
+      return;
+    }
+  }
   loading.value = true;
   try {
-    await login(username.value.trim(), password.value);
+    await login(form.username.trim(), form.password);
+    ElMessage.success("登录成功");
     await router.replace({ name: "home" });
   } catch (e) {
-    error.value = e.message || "登录失败";
+    error.value = e.message || "登录失败，请检查用户名或密码";
   } finally {
     loading.value = false;
   }
 }
 </script>
+
+<style scoped>
+.lead {
+  margin: 0 0 8px;
+}
+</style>
