@@ -1,0 +1,7 @@
+# Candidate tip SSOT = branch HEAD of feature/fsa-night-all-in-one
+# Authoritative: git rev-parse HEAD
+# Baseline lineage: 466c13d… + W0 docs + NIGHT commits
+# Worktree: fsa-night-w0-stabilize
+#
+# W1+/DIRECTOR: copy full 40-char from:
+#   git rev-parse HEAD
