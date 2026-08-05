@@ -380,8 +380,8 @@ function goSkills() {
 function goAdmin() {
   router.push({ name: "admin" });
 }
-function openChat(_id) {
-  router.push({ name: "chat" });
+function openChat(id) {
+  router.push({ name: "chat", query: id ? { id } : {} });
 }
 
 async function onLogout() {

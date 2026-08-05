@@ -161,8 +161,8 @@
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { nextTick, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import StateBlock from "../components/StateBlock.vue";
 import {
@@ -175,6 +175,7 @@ import {
 
 const LS_MODEL = "fsa_selected_model_key";
 const router = useRouter();
+const route = useRoute();
 const chats = ref([]);
 const activeId = ref(null);
 const messages = ref([]);
@@ -193,7 +194,20 @@ const selectedKey = ref("");
 
 onMounted(async () => {
   await Promise.all([reloadChats(), loadModels()]);
+  const qid = route.query.id;
+  if (typeof qid === "string" && qid) {
+    await selectChat(qid);
+  }
 });
+
+watch(
+  () => route.query.id,
+  async (qid) => {
+    if (typeof qid === "string" && qid && qid !== activeId.value) {
+      await selectChat(qid);
+    }
+  },
+);
 
 function formatModelLabel(m) {
   const free = m.free === true ? " · free" : "";
