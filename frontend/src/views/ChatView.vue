@@ -15,14 +15,24 @@
             新建会话
           </el-button>
         </div>
-        <el-alert
-          v-if="listError"
-          type="error"
-          :title="listError"
-          show-icon
-          :closable="false"
-        />
-        <template v-if="chats.length">
+        <div v-if="listError" style="margin-bottom: 8px">
+          <el-alert
+            type="error"
+            :title="listError"
+            show-icon
+            :closable="false"
+          />
+          <el-button
+            size="small"
+            style="margin-top: 8px"
+            :loading="listLoading"
+            @click="reloadChats"
+          >
+            重试
+          </el-button>
+        </div>
+        <StateBlock v-if="listLoading" kind="loading" :rows="3" />
+        <template v-else-if="chats.length">
           <button
             v-for="c in chats"
             :key="c.id"
@@ -98,15 +108,32 @@
         </div>
 
         <div class="composer">
-          <el-alert
-            v-if="sendError"
-            type="error"
-            :title="sendError"
-            show-icon
-            :closable="false"
-            style="margin-bottom: 12px"
-            role="alert"
-          />
+          <div v-if="sendError" style="margin-bottom: 12px" role="alert">
+            <el-alert
+              type="error"
+              :title="sendError"
+              show-icon
+              :closable="false"
+            />
+            <div class="row" style="margin-top: 8px">
+              <el-button
+                size="small"
+                type="primary"
+                :loading="sending"
+                :disabled="!activeId || !draft.trim()"
+                @click="onSend"
+              >
+                重试发送
+              </el-button>
+              <el-button
+                v-if="sendErrorIsOc"
+                size="small"
+                @click="goEnableOc"
+              >
+                去启用 OpenCode
+              </el-button>
+            </div>
+          </div>
           <el-input
             v-model="draft"
             type="textarea"
@@ -153,7 +180,9 @@ const activeId = ref(null);
 const messages = ref([]);
 const draft = ref("");
 const listError = ref("");
+const listLoading = ref(true);
 const sendError = ref("");
+const sendErrorIsOc = ref(false);
 const creating = ref(false);
 const sending = ref(false);
 const msgBox = ref(null);
@@ -218,6 +247,7 @@ async function loadModels() {
 }
 
 async function reloadChats() {
+  listLoading.value = true;
   listError.value = "";
   try {
     const data = await listChats();
@@ -228,6 +258,8 @@ async function reloadChats() {
       return;
     }
     listError.value = e.message || "无法加载会话列表，请检查网络或重新登录";
+  } finally {
+    listLoading.value = false;
   }
 }
 
@@ -265,6 +297,7 @@ async function onSend() {
   if (!activeId.value || !draft.value.trim() || sending.value) return;
   sending.value = true;
   sendError.value = "";
+  sendErrorIsOc.value = false;
   const text = draft.value.trim();
   const model = selectedModel();
   try {
@@ -280,6 +313,7 @@ async function onSend() {
     await reloadChats();
   } catch (e) {
     if (e.code === "oc_unavailable") {
+      sendErrorIsOc.value = true;
       sendError.value =
         e.message ||
         "OpenCode 未就绪。请点「启用 OpenCode」或回工作台完成引导后再发送。";

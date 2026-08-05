@@ -52,3 +52,15 @@ def test_human_chinese_error_paths_in_views() -> None:
     assert "授权" in skills
     login = (FE / "src" / "views" / "LoginView.vue").read_text(encoding="utf-8")
     assert "登录" in login
+
+
+def test_chat_list_loading_before_empty_and_retry() -> None:
+    """Shipped ChatView: listLoading gates empty; errors offer 重试."""
+    chat = (FE / "src" / "views" / "ChatView.vue").read_text(encoding="utf-8")
+    assert "listLoading" in chat
+    assert 'kind="loading"' in chat
+    assert "reloadChats" in chat
+    # empty only after loading finished
+    assert "v-if=\"listLoading\"" in chat or "v-if='listLoading'" in chat
+    assert "重试" in chat
+    assert "重试发送" in chat
