@@ -6,8 +6,8 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
-from app.adapters.oc_client import OcClient, enable_guide
 from app.api.v1.deps import ConnDep, get_current_user
+from app.services import oc_service
 from app.services.auth_service import UserRecord
 
 router = APIRouter(tags=["system"])
@@ -18,20 +18,19 @@ CurrentUser = Annotated[UserRecord, Depends(get_current_user)]
 @router.get("/opencode/status")
 def opencode_status(_user: CurrentUser) -> dict[str, Any]:
     """Re-probe OC for workbench 「我已启动」."""
-    result = OcClient().probe()
-    return {"opencode": result.as_dict()}
+    return {"opencode": oc_service.probe()}
 
 
 @router.get("/opencode/enable-guide")
 def opencode_enable_guide(_user: CurrentUser) -> dict[str, Any]:
     """User-confirmed setup commands — no server-side install."""
-    return enable_guide()
+    return oc_service.enable_guide()
 
 
 @router.get("/opencode/models")
 def opencode_models(_user: CurrentUser) -> dict[str, Any]:
     """List models from live OpenCode only — never a mid-platform whitelist."""
-    return OcClient().list_models()
+    return oc_service.list_models()
 
 
 @router.get("/skills-catalog")

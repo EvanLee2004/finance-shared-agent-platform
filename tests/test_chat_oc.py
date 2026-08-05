@@ -127,23 +127,22 @@ def test_send_with_mock_oc_success(admin_client: TestClient) -> None:
         "parts": [{"type": "text", "text": "mock reply ok"}],
     }
 
-    with patch("app.api.v1.chats.OcClient", return_value=mock):
-        with patch("app.services.chat_service.OcClient", return_value=mock):
-            created = admin_client.post("/api/v1/chats", json={"title": "online"})
-            assert created.status_code == 200
-            chat_id = created.json()["chat"]["id"]
-            send = admin_client.post(
-                f"/api/v1/chats/{chat_id}/messages",
-                json={"content": "ping"},
-            )
-            assert send.status_code == 200, send.text
-            body = send.json()
-            assert body["user_message"]["content_text"] == "ping"
-            assert "mock reply ok" in body["assistant_message"]["content_text"]
+    with patch("app.services.oc_service.client", return_value=mock):
+        created = admin_client.post("/api/v1/chats", json={"title": "online"})
+        assert created.status_code == 200
+        chat_id = created.json()["chat"]["id"]
+        send = admin_client.post(
+            f"/api/v1/chats/{chat_id}/messages",
+            json={"content": "ping"},
+        )
+        assert send.status_code == 200, send.text
+        body = send.json()
+        assert body["user_message"]["content_text"] == "ping"
+        assert "mock reply ok" in body["assistant_message"]["content_text"]
 
-            hist = admin_client.get(f"/api/v1/chats/{chat_id}/messages")
-            assert hist.status_code == 200
-            assert len(hist.json()["items"]) >= 2
+        hist = admin_client.get(f"/api/v1/chats/{chat_id}/messages")
+        assert hist.status_code == 200
+        assert len(hist.json()["items"]) >= 2
 
 
 def test_enable_guide_requires_auth(admin_client: TestClient) -> None:

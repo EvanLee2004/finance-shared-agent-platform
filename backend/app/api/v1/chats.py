@@ -7,7 +7,6 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
 
-from app.adapters.oc_client import OcClient
 from app.api.v1.deps import ConnDep, get_current_user
 from app.services import chat_service
 from app.services.auth_service import UserRecord
@@ -42,7 +41,6 @@ def create_chat(body: CreateChatBody, conn: ConnDep, user: CurrentUser) -> dict[
         conn,
         user_id=user.id,
         title=body.title,
-        oc=OcClient(),
     )
     return {"chat": chat}
 
@@ -78,6 +76,5 @@ def post_message(
         text=body.content,
         provider_id=body.provider_id,
         model_id=body.model_id,
-        oc=OcClient(),
     )
     return result

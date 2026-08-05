@@ -11,9 +11,11 @@ from app.adapters.oc_client import (
     extract_session_id,
 )
 from app.db.migrate import utc_now
+from app.domain import enums
 from app.domain.errors import NotFound, OcUnavailable, ValidationError
 from app.domain.ids import new_id
 from app.services.audit_service import write_audit
+from app.services import oc_service
 
 
 def _chat_row(row: sqlite3.Row) -> dict[str, Any]:
@@ -84,7 +86,7 @@ def create_chat(
     oc_session_id: str | None = None
     status = "active"
 
-    client = oc or OcClient()
+    client = oc or oc_service.client()
     if bind_oc:
         probe = client.probe()
         if probe.ok:
@@ -106,7 +108,7 @@ def create_chat(
     )
     write_audit(
         conn,
-        action="chat.create",
+        action=enums.AUDIT_CHAT_CREATE,
         resource_type="chat",
         resource_id=chat_id,
         actor_user_id=user_id,
@@ -186,7 +188,7 @@ def send_message(
         raise ValidationError("消息不能为空")
 
     chat = get_chat(conn, user_id, chat_id)
-    client = oc or OcClient()
+    client = oc or oc_service.client()
     now = utc_now()
 
     # Always allow browsing history; send needs OC
@@ -277,7 +279,7 @@ def send_message(
     )
     write_audit(
         conn,
-        action="chat.message",
+        action=enums.AUDIT_CHAT_MESSAGE,
         resource_type="chat",
         resource_id=chat_id,
         actor_user_id=user_id,

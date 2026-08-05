@@ -120,7 +120,7 @@ def sync_from_local(
     tip = skills_repo.git_tip(root)
     write_audit(
         conn,
-        action="skills.sync",
+        action=enums.AUDIT_SKILLS_SYNC,
         resource_type="skills_repo",
         actor_user_id=actor_user_id,
         summary=f"sync catalog upserted={upserted} root={root}",
@@ -171,7 +171,7 @@ def list_skills(
         is_admin = role == enums.ROLE_ADMIN
         granted = sid in grant_skill_ids
         owned = r["owner_user_id"] == user_id
-        runnable = vis == "published" and (is_admin or granted)
+        runnable = vis == enums.VIS_PUBLISHED and (is_admin or granted)
         if scope == "runnable" and not runnable:
             continue
         if scope == "mine" and not owned and not granted:
@@ -251,7 +251,7 @@ def grant_run(
 ) -> dict[str, Any]:
     if actor_role != enums.ROLE_ADMIN:
         raise Forbidden("仅管理员可授权")
-    if principal_type not in ("user", "role"):
+    if principal_type not in (enums.PRINCIPAL_USER, enums.PRINCIPAL_ROLE):
         raise ValidationError("principal_type 须为 user|role")
     if not principal_id.strip():
         raise ValidationError("principal_id 必填")
@@ -283,7 +283,7 @@ def grant_run(
         )
     write_audit(
         conn,
-        action="skills.grant",
+        action=enums.AUDIT_SKILLS_GRANT,
         resource_type="skill_grant",
         resource_id=gid,
         actor_user_id=actor_user_id,

@@ -79,7 +79,7 @@ def test_list_models_from_mock_oc(admin_client: TestClient) -> None:
         "error": None,
     }
 
-    with patch("app.api.v1.system.OcClient", return_value=mock):
+    with patch("app.services.oc_service.list_models", return_value=mock.list_models.return_value):
         r = admin_client.get("/api/v1/opencode/models")
     assert r.status_code == 200, r.text
     body = r.json()
@@ -146,7 +146,7 @@ def test_list_models_when_oc_down(admin_client: TestClient) -> None:
         "error": "ConnectError",
         "opencode": {"ok": False, "endpoint": "127.0.0.1:4096"},
     }
-    with patch("app.api.v1.system.OcClient", return_value=mock):
+    with patch("app.services.oc_service.list_models", return_value=mock.list_models.return_value):
         r = admin_client.get("/api/v1/opencode/models")
     assert r.status_code == 200  # never 500
     body = r.json()
@@ -184,24 +184,23 @@ def test_send_message_forwards_selected_model(admin_client: TestClient) -> None:
 
     mock.send_message.side_effect = _send
 
-    with patch("app.api.v1.chats.OcClient", return_value=mock):
-        with patch("app.services.chat_service.OcClient", return_value=mock):
-            created = admin_client.post("/api/v1/chats", json={"title": "m"})
-            assert created.status_code == 200
-            chat_id = created.json()["chat"]["id"]
-            send = admin_client.post(
-                f"/api/v1/chats/{chat_id}/messages",
-                json={
-                    "content": "hello model",
-                    "providerID": "opencode",
-                    "modelID": "deepseek-v4-flash-free",
-                },
-            )
-            assert send.status_code == 200, send.text
-            body = send.json()
-            assert body["model"]["providerID"] == "opencode"
-            assert body["model"]["modelID"] == "deepseek-v4-flash-free"
-            assert "deepseek-v4-flash-free" in body["assistant_message"]["content_text"]
+    with patch("app.services.oc_service.client", return_value=mock):
+        created = admin_client.post("/api/v1/chats", json={"title": "m"})
+        assert created.status_code == 200
+        chat_id = created.json()["chat"]["id"]
+        send = admin_client.post(
+            f"/api/v1/chats/{chat_id}/messages",
+            json={
+                "content": "hello model",
+                "providerID": "opencode",
+                "modelID": "deepseek-v4-flash-free",
+            },
+        )
+        assert send.status_code == 200, send.text
+        body = send.json()
+        assert body["model"]["providerID"] == "opencode"
+        assert body["model"]["modelID"] == "deepseek-v4-flash-free"
+        assert "deepseek-v4-flash-free" in body["assistant_message"]["content_text"]
 
     assert captured["provider_id"] == "opencode"
     assert captured["model_id"] == "deepseek-v4-flash-free"

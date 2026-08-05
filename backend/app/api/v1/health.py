@@ -6,9 +6,9 @@ from typing import Any
 
 from fastapi import APIRouter, Response
 
-from app.adapters.oc_client import OcClient
 from app.api.v1.deps import ConnDep
 from app.db.migrate import get_schema_version
+from app.services import oc_service
 from app.services.skill_service import repo_status
 
 router = APIRouter(tags=["system"])
@@ -25,7 +25,7 @@ def health(conn: ConnDep) -> dict[str, Any]:
     except Exception:  # noqa: BLE001
         db_ok = False
 
-    oc = OcClient().probe()
+    oc = oc_service.probe()
     skills = repo_status()
 
     status = "ok" if db_ok else "degraded"
@@ -33,7 +33,7 @@ def health(conn: ConnDep) -> dict[str, Any]:
         "status": status,
         "name": "finance-shared-agent-platform",
         "schema_version": schema_version if schema_version is not None else 0,
-        "opencode": oc.as_dict(),
+        "opencode": oc,
         "db": {"ok": db_ok},
         "skills_repo": skills,
         "capabilities": {

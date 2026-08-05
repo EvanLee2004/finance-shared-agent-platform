@@ -7,9 +7,21 @@
 | 公开 Skills | [finance-shared-skills](https://github.com/EvanLee2004/finance-shared-skills) · [Gitee](https://gitee.com/Lee157/finance-shared-skills) |
 | Gitee 本仓 | https://gitee.com/Lee157/finance-shared-agent-platform |
 | License | MIT |
-| 当前阶段 | **Phase0 本机工作台**（登录 + 工作台 + 主题 + 可选 OC 对话） |
+| 当前阶段 | **本机可用中台**（登录/工作台/技能同步授权/可选 OC 对话 · 一夜队列 W0–W9） |
 
-## 架构（简）
+## 架构（简 · 与代码一致）
+
+```text
+浏览器 Vue ──HTTP only──► FastAPI /api/v1
+                              │
+              api(薄) → services → adapters → OC / FS / SQLite
+                              │
+                           domain(enums/errors)
+
+· OpenCode HTTP 仅 adapters/oc_client.py（路由经 services/oc_service）
+· 权限真相在服务端（grant/admin）；前端 role 只控制展示
+· OC 可选：挂时登录/health/技能目录仍可用
+```
 
 ```text
 浏览器 → 中台 Vue (127.0.0.1:5173) → 中台 API (127.0.0.1:18000)
